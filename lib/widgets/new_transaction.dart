@@ -39,6 +39,7 @@ class _NewTransactionState extends State<NewTransaction> {
               decoration: InputDecoration(labelText: 'Title'),
               controller: titleController,
               onSubmitted: (_) => submitData(),
+              cursorColor: Theme.of(context).primaryColor,
               //onChanged: (value) => titleInput = value,
             ),
             TextField(
@@ -49,7 +50,7 @@ class _NewTransactionState extends State<NewTransaction> {
               onSubmitted: (_) => submitData(),
             ),
             FlatButton(
-                color: Colors.purple,
+                color: Theme.of(context).accentColor,
                 child: Text('Add transaction'),
                 onPressed: submitData),
           ],

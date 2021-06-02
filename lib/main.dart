@@ -12,6 +12,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter App',
       theme: ThemeData(
+          fontFamily: 'Quicksand',
           primarySwatch: Colors.purple,
           accentColor: Colors.purpleAccent,
           secondaryHeaderColor: Colors.white),
@@ -72,7 +73,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).secondaryHeaderColor,
         shadowColor: Theme.of(context).primaryColor,
         title: Text(
           'Flutter App',
@@ -82,6 +83,7 @@ class _MyHomePageState extends State<MyHomePage> {
           IconButton(
             icon: Icon(Icons.add),
             onPressed: () => _startAddNewTransaction(context),
+            color: Theme.of(context).primaryColor,
           )
         ],
       ),
@@ -94,14 +96,7 @@ class _MyHomePageState extends State<MyHomePage> {
               height: 50,
               width: double.infinity,
               child: Card(
-                color: Theme.of(context).secondaryHeaderColor,
-                child: Text(
-                  "KUpa",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      color: Theme.of(context).secondaryHeaderColor,
-                      fontSize: 24),
-                ),
+                color: Theme.of(context).primaryColor,
                 elevation: 5,
               ),
             ),
