@@ -4,9 +4,10 @@ import './chart_bar.dart';
 import '../models/transactin.dart';
 
 class Chart extends StatelessWidget {
-  Chart(this.recentTransactions);
+  Chart(this.recentTransactions, this.currencyMultiplier);
 
   final List<Transaction> recentTransactions;
+  final double currencyMultiplier;
 
   List<Map<String, Object>> get groupedTransactionValues {
     return List.generate(7, (index) {
@@ -25,7 +26,7 @@ class Chart extends StatelessWidget {
 
       return {
         'day': DateFormat.E().format(weekDay).substring(0, 1),
-        'amount': totalSum,
+        'amount': totalSum * currencyMultiplier,
       };
     }).reversed.toList();
   }

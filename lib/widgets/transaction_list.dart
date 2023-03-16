@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:intl/intl.dart';
+import 'package:personal_expanses_app/currency_api_bloc.dart';
 
 import '../map_view.dart';
 import '../models/transactin.dart';
 
 class TransactionList extends StatelessWidget {
+  TransactionList(this.transactions, this.deleteTx, this.currencyMultiplier);
+
   final List<Transaction> transactions;
   final Function deleteTx;
-
-  TransactionList(this.transactions, this.deleteTx);
+  final double currencyMultiplier;
 
   @override
   Widget build(BuildContext context) {
@@ -39,11 +42,13 @@ class TransactionList extends StatelessWidget {
                     horizontal: 16,
                   ),
                   child: ListTile(
-                    leading: Padding(
-                      padding: EdgeInsets.all(6),
-                      child: FittedBox(
-                        child: Text('\$${transactions[index].amount}'),
-                      ),
+                    leading: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                            '${(transactions[index].amount * currencyMultiplier).toStringAsFixed(2)}'),
+                        Text(GetIt.I.get<CurrencyApiBloc>().currentCurrencySink.value.name),
+                      ],
                     ),
                     title: Row(
                       children: [

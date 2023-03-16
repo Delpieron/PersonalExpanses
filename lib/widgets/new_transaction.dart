@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:personal_expanses_app/currency_api_bloc.dart';
 import 'package:personal_expanses_app/map_view.dart';
+import 'package:get_it/get_it.dart';
 
 class NewTransaction extends StatefulWidget {
   final Function(String txTitle, double txAmount, DateTime chosenDate, LocalizationObject? localization) addExpanse;
@@ -58,10 +60,11 @@ class _NewTransactionState extends State<NewTransaction> {
   Widget build(BuildContext context) {
     return Card(
       key: Key('TestClose'),
-      elevation: 5,
-      child: Container(
-        padding: EdgeInsets.all(10),
+      elevation: 8,
+      child: Padding(
+        padding: EdgeInsets.all(16),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.end,
           children: <Widget>[
             TextField(
@@ -70,12 +73,20 @@ class _NewTransactionState extends State<NewTransaction> {
               controller: _titleController,
               onSubmitted: (_) => _submitData(),
             ),
-            TextField(
-              key: Key('AmountInput'),
-              decoration: InputDecoration(labelText: 'Amount'),
-              controller: _amountController,
-              keyboardType: TextInputType.number,
-              onSubmitted: (_) => _submitData(),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: TextField(
+                    key: Key('AmountInput'),
+                    decoration: InputDecoration(labelText: 'Amount'),
+                    controller: _amountController,
+                    keyboardType: TextInputType.number,
+                    onSubmitted: (_) => _submitData(),
+                  ),
+                ),
+                Text(GetIt.I.get<CurrencyApiBloc>().currentCurrencySink.value.name),
+              ],
             ),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8.0),

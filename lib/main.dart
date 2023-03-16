@@ -1,13 +1,20 @@
+import 'package:async_builder/async_builder.dart';
 import 'package:flutter/material.dart';
+import 'package:personal_expanses_app/currency_api_bloc.dart';
+import 'package:personal_expanses_app/currency_enum.dart';
 import 'package:personal_expanses_app/map_view.dart';
 import 'package:personal_expanses_app/themes.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:uuid/uuid.dart';
+import 'package:async_builder/init_builder.dart';
 
 import './widgets/new_transaction.dart';
 import './widgets/transaction_list.dart';
 import './widgets/chart.dart';
 import './models/transactin.dart';
+import 'package:get_it/get_it.dart';
+
+import 'loading_view.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -103,10 +110,16 @@ class MyHomePageState extends State<MyHomePage> {
   void startAddNewTransaction(BuildContext ctx) {
     showModalBottomSheet(
       context: ctx,
+      isScrollControlled: true,
       builder: (_) {
         return GestureDetector(
           onTap: () {},
-          child: NewTransaction(_addNewTransaction),
+          child: AnimatedPadding(
+            duration: Duration(milliseconds: 150),
+            curve: Curves.easeIn,
+            padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+            child: NewTransaction(_addNewTransaction),
+          ),
           behavior: HitTestBehavior.opaque,
         );
       },
@@ -119,37 +132,107 @@ class MyHomePageState extends State<MyHomePage> {
     });
   }
 
+//fkIoHVXWlo4VhfR0fnNmVNpv30COQ0Yl
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-        title: Text(
-          'Personal Expenses',
-          style: TextStyle(color: Theme.of(context).secondaryHeaderColor),
-        ),
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.add),
-            onPressed: () => startAddNewTransaction(context),
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            Chart(_recentTransactions),
-            TransactionList(_userTransactions, _deleteTransaction),
+    return InitBuilder<void>(
+      getter: initCurrencyApi,
+      builder: (context, _) {
+        return Stack(
+          children: [
+            Scaffold(
+              resizeToAvoidBottomInset: true,
+              appBar: AppBar(
+                backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+                title: Text(
+                  'Personal Expenses',
+                  style: TextStyle(color: Theme.of(context).secondaryHeaderColor),
+                ),
+                actions: <Widget>[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: SizedBox(
+                      width: 80,
+                      child: DropdownButtonFormField<currencyEnum>(
+                        iconEnabledColor: Colors.white,
+                        isExpanded: true,
+                        isDense: false,
+                        value: GetIt.I.get<CurrencyApiBloc>().currentCurrencySink.value,
+                        dropdownColor: Colors.red,
+                        items: List<DropdownMenuItem<currencyEnum>>.generate(
+                          currencyEnum.values.length,
+                          (index) => DropdownMenuItem<currencyEnum>(
+                            value: currencyEnum.values[index],
+                            child: Text(
+                              currencyEnum.values[index].name,
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ),
+                        onChanged: (newCurrency) =>
+                            GetIt.I.get<CurrencyApiBloc>().currentCurrencySink.value = newCurrency!,
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: IconButton(
+                      icon: Icon(Icons.add),
+                      onPressed: () => startAddNewTransaction(context),
+                    ),
+                  ),
+                ],
+              ),
+              body: SingleChildScrollView(
+                child: AsyncBuilder<double?>(
+                  stream: GetIt.I.get<CurrencyApiBloc>().currentCurrencyMultiplierSink,
+                  error: (context, obj, stack) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error occurred. Please restart app and try again')),
+                    );
+                    return SizedBox.shrink();
+                  },
+                  builder: (context, currencyMultiplier) {
+                    if (currencyMultiplier == null || currencyMultiplier == 0.0) {
+                      return const SizedBox.shrink();
+                    }
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        Chart(_recentTransactions, currencyMultiplier),
+                        TransactionList(_userTransactions, _deleteTransaction, currencyMultiplier),
+                      ],
+                    );
+                  },
+                ),
+              ),
+              floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+              floatingActionButton: FloatingActionButton(
+                child: Icon(Icons.add),
+                key: Key('addButton'),
+                onPressed: () => startAddNewTransaction(context),
+              ),
+            ),
+            AsyncBuilder(
+              stream: GetIt.I.get<CurrencyApiBloc>().currentCurrencyMultiplierSink.stream,
+              error: (context, obj, stack) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Error occurred. Please restart app and try again')),
+                );
+                return SizedBox.shrink();
+              },
+              builder: (context, newCurrency) {
+                if (newCurrency != null) {
+                  return SizedBox.shrink();
+                }
+                return const LoadingView();
+              },
+            )
           ],
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.add),
-        key: Key('addButton'),
-        onPressed: () => startAddNewTransaction(context),
-      ),
+        );
+      },
     );
   }
 }
+
+void initCurrencyApi() => GetIt.I.registerSingleton<CurrencyApiBloc>(CurrencyApiBloc());
