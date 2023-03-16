@@ -1,46 +1,63 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:personal_expanses_app/map_view.dart';
 
 class NewTransaction extends StatefulWidget {
-  final Function _addTransactionHandler;
+  final Function(String txTitle, double txAmount, DateTime chosenDate, LocalizationObject? localization) addExpanse;
 
-  NewTransaction(this._addTransactionHandler);
+  NewTransaction(this.addExpanse);
 
   @override
   _NewTransactionState createState() => _NewTransactionState();
 }
 
 class _NewTransactionState extends State<NewTransaction> {
-  final titleController = TextEditingController();
+  final _titleController = TextEditingController();
+  final _amountController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
-  final amountController = TextEditingController();
+  LocalizationObject? transactionAdress;
+
+  void _submitData() {
+    if (_amountController.text.isEmpty) {
+      return;
+    }
+    final enteredTitle = _titleController.text;
+    final enteredAmount = double.parse(_amountController.text);
+
+    if (enteredTitle.isEmpty || enteredAmount <= 0) {
+      return;
+    }
+
+    widget.addExpanse(
+      enteredTitle,
+      enteredAmount,
+      _selectedDate,
+      transactionAdress,
+    );
+
+    Navigator.of(context).pop();
+  }
 
   void _presentDatePicker() {
     showDatePicker(
-            context: context,
-            initialDate: DateTime.now(),
-            firstDate: DateTime(2021),
-            lastDate: DateTime.now())
-        .then((value) {
-      if (value == null) return;
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2019),
+      lastDate: DateTime.now(),
+    ).then((pickedDate) {
+      if (pickedDate == null) {
+        return;
+      }
       setState(() {
-        _selectedDate = value;
+        _selectedDate = pickedDate;
       });
     });
-  }
-
-  void _submitData() {
-    final eneredTitle = titleController.text;
-    final eneredAmount = double.parse(amountController.text);
-    if (eneredTitle.isEmpty || eneredAmount <= 0) return;
-
-    widget._addTransactionHandler(eneredTitle, eneredAmount, _selectedDate);
-    Navigator.of(context).pop();
   }
 
   @override
   Widget build(BuildContext context) {
     return Card(
+      key: Key('TestClose'),
       elevation: 5,
       child: Container(
         padding: EdgeInsets.all(10),
@@ -48,48 +65,74 @@ class _NewTransactionState extends State<NewTransaction> {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: <Widget>[
             TextField(
+              key: Key('TitleInput'),
               decoration: InputDecoration(labelText: 'Title'),
-              controller: titleController,
+              controller: _titleController,
               onSubmitted: (_) => _submitData(),
-              cursorColor: Theme.of(context).primaryColor,
-              //onChanged: (value) => titleInput = value,
             ),
             TextField(
+              key: Key('AmountInput'),
               decoration: InputDecoration(labelText: 'Amount'),
-              //onChanged: (value) => titleInput = value,
-              controller: amountController,
+              controller: _amountController,
               keyboardType: TextInputType.number,
               onSubmitted: (_) => _submitData(),
             ),
-            Container(
-              height: 60,
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(transactionAdress?.localizationString ?? 'Choose localization'),
+                    IconButton(
+                      onPressed: () async {
+                        final localization = await Navigator.of(context).push<LocalizationObject>(
+                          MaterialPageRoute(builder: (_) => SelectionMapView()),
+                        );
+                        setState(() {
+                          transactionAdress = localization;
+                        });
+                      },
+                      icon: Icon(Icons.map_outlined),
+                    )
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(
+              height: 50,
               child: Row(
                 children: <Widget>[
-                  Text(_selectedDate == null
-                      ? 'No date chosen!'
-                      : DateFormat('yyyy-MM-dd').format(_selectedDate)),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 8.0),
-                    child: RaisedButton(
-                        color: Colors.white,
-                        onPressed: _presentDatePicker,
-                        child: Text(
-                          'Chose date',
-                          style: TextStyle(
-                              color: Theme.of(context).primaryColor,
-                              fontWeight: FontWeight.bold),
-                        )),
-                  )
+                  Expanded(
+                    child: Text(
+                      'Picked Date: ${DateFormat.yMd().format(_selectedDate)}',
+                    ),
+                  ),
+                  MaterialButton(
+                    textColor: Theme.of(context).primaryColor,
+                    child: Text(
+                      'Choose Date',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    onPressed: _presentDatePicker,
+                  ),
                 ],
               ),
             ),
-            FlatButton(
-                color: Theme.of(context).accentColor,
-                child: Text('Add transaction',
-                    style: TextStyle(
-                        color: Theme.of(context).secondaryHeaderColor,
-                        fontWeight: FontWeight.bold)),
-                onPressed: _submitData),
+            Padding(
+              padding: const EdgeInsets.only(top: 32.0),
+              child: Center(
+                child: MaterialButton(
+                  elevation: 6,
+                  child: Text('Save'),
+                  color: Theme.of(context).primaryColor,
+                  height: 60,
+                  textColor: Theme.of(context).secondaryHeaderColor,
+                  onPressed: _submitData,
+                ),
+              ),
+            ),
           ],
         ),
       ),

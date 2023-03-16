@@ -1,124 +1,154 @@
 import 'package:flutter/material.dart';
-import 'package:personal_expanses_app/widgets/new_transaction.dart';
-import 'package:personal_expanses_app/widgets/transaction_list.dart';
-import 'package:personal_expanses_app/widgets/chart.dart';
+import 'package:personal_expanses_app/map_view.dart';
+import 'package:personal_expanses_app/themes.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:uuid/uuid.dart';
 
-import 'models/transactin.dart';
+import './widgets/new_transaction.dart';
+import './widgets/transaction_list.dart';
+import './widgets/chart.dart';
+import './models/transactin.dart';
 
-void main() => runApp(MyApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final result = await requestPermissions([Permission.location]);
+  if (!result) {
+    retryRequests();
+  }
+
+  return runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter App',
-      theme: ThemeData(
-          fontFamily: 'Quicksand',
-          primarySwatch: Colors.purple,
-          accentColor: Colors.purpleAccent,
-          secondaryHeaderColor: Colors.white),
+      title: 'Personal Expenses',
+      theme: lightTheme,
+      debugShowCheckedModeBanner: false,
       home: MyHomePage(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  //late String titleInput;
-  // late String amountInput;
-  @override
-  _MyHomePageState createState() => _MyHomePageState();
+final Map<Permission, PermissionStatus> _deniedPermissions = {};
+
+void retryRequests() {
+  _deniedPermissions.forEach((perm, status) async {
+    if (status.isPermanentlyDenied) {
+      await openAppSettings();
+    } else {
+      final result = await perm.request();
+      _deniedPermissions[perm] = result;
+    }
+  });
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  //final titleController = TextEditingController();
-  //final amountCotroller = TextEditingController();
+Future<bool> requestPermissions(Iterable<Object> permissions) async {
+  _deniedPermissions.clear();
+  final results = await (permissions.whereType<Permission>().toList()).request();
+  final denied = results.entries.where((perm) => perm.value.isDenied || perm.value.isPermanentlyDenied);
+  if (_deniedPermissions.isNotEmpty) {
+    _deniedPermissions.addEntries(denied);
+    return false;
+  }
+  return true;
+}
 
-  final List<Transaction> _transactions = [
-/*     Transaction(
-      id: 't1',
-      title: 'buty',
-      amount: 72.56,
+class MyHomePage extends StatefulWidget {
+  @override
+  MyHomePageState createState() => MyHomePageState();
+}
+
+class MyHomePageState extends State<MyHomePage> {
+  final List<Transaction> _userTransactions = [
+    Transaction(
+      id: const Uuid().v4(),
+      title: 'New Shoes',
+      amount: 69.99,
       date: DateTime.now(),
     ),
     Transaction(
-      id: 't2',
-      title: 'spodnie',
-      amount: 55.14,
+      id: const Uuid().v4(),
+      title: 'Weekly Groceries',
+      amount: 16.53,
       date: DateTime.now(),
-    ), */
+    ),
   ];
+
   List<Transaction> get _recentTransactions {
-    List<Transaction> _tempList = [];
-    for (int i = 0; i < _transactions.length; i++)
-      if (_transactions[i]
-          .date
-          .isAfter(DateTime.now().subtract(Duration(days: 7))))
-        _tempList.add(_transactions[i]);
-    return _tempList;
+    return _userTransactions.where((tx) {
+      return tx.date.isAfter(
+        DateTime.now().subtract(
+          Duration(days: 7),
+        ),
+      );
+    }).toList();
   }
 
-  void _addNewTransaction(String title, double amount, DateTime selectedDate) {
+  void _addNewTransaction(String txTitle, double txAmount, DateTime chosenDate, LocalizationObject? localization) {
     final newTx = Transaction(
-        title: title,
-        amount: amount,
-        date: selectedDate,
-        id: DateTime.now().toString());
+      title: txTitle,
+      amount: txAmount,
+      date: chosenDate,
+      localization: localization,
+      id: const Uuid().v4(),
+    );
+
     setState(() {
-      _transactions.add(newTx);
+      _userTransactions.add(newTx);
     });
   }
 
-  void _startAddNewTransaction(BuildContext ctx) {
+  void startAddNewTransaction(BuildContext ctx) {
     showModalBottomSheet(
-        context: ctx,
-        builder: (_) {
-          return GestureDetector(
-            onTap: () {},
-            child: NewTransaction(_addNewTransaction),
-            behavior: HitTestBehavior.opaque,
-          );
-        });
+      context: ctx,
+      builder: (_) {
+        return GestureDetector(
+          onTap: () {},
+          child: NewTransaction(_addNewTransaction),
+          behavior: HitTestBehavior.opaque,
+        );
+      },
+    );
+  }
+
+  void _deleteTransaction(String id) {
+    setState(() {
+      _userTransactions.removeWhere((tx) => tx.id == id);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).secondaryHeaderColor,
-        shadowColor: Theme.of(context).primaryColor,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         title: Text(
-          'Flutter App',
-          style: TextStyle(color: Theme.of(context).primaryColor),
+          'Personal Expenses',
+          style: TextStyle(color: Theme.of(context).secondaryHeaderColor),
         ),
         actions: <Widget>[
           IconButton(
             icon: Icon(Icons.add),
-            onPressed: () => _startAddNewTransaction(context),
-            color: Theme.of(context).primaryColor,
-          )
+            onPressed: () => startAddNewTransaction(context),
+          ),
         ],
       ),
       body: SingleChildScrollView(
         child: Column(
-          //mainAxisAlignment: MainAxisAlignment.spaceAround,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             Chart(_recentTransactions),
-            Container(
-              height: 10,
-              width: double.infinity,
-              child: Card(
-                color: Theme.of(context).primaryColor,
-                elevation: 5,
-              ),
-            ),
-            TransactionList(_transactions)
+            TransactionList(_userTransactions, _deleteTransaction),
           ],
         ),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
-        onPressed: () => _startAddNewTransaction(context),
+        key: Key('addButton'),
+        onPressed: () => startAddNewTransaction(context),
       ),
     );
   }
