@@ -15,23 +15,15 @@ class TransactionList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       height: 490,
       child: transactions.isEmpty
-          ? Column(
-              children: <Widget>[
-                Text(
-                  'No transactions added yet!',
-                ),
-                SizedBox(
-                  height: 30,
-                ),
-                Container(
-                  key: Key('testEmpty'),
-                  height: 300,
-                ),
-              ],
-            )
+          ?
+                Center(
+                  child: Text(
+                    'No transactions added yet!',
+                  ),
+                )
           : ListView.builder(
               itemBuilder: (ctx, index) {
                 return Card(
@@ -42,24 +34,23 @@ class TransactionList extends StatelessWidget {
                     horizontal: 16,
                   ),
                   child: ListTile(
-                    leading: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                            '${(transactions[index].amount * currencyMultiplier).toStringAsFixed(2)}'),
-                        Text(GetIt.I.get<CurrencyApiBloc>().currentCurrencySink.value.name),
-                      ],
+                    leading: Padding(
+                      padding: const EdgeInsets.only(top: 10.0, right: 8),
+                      child: Text(
+                        NumberFormat.simpleCurrency(name: GetIt.I.get<CurrencyApiBloc>().currentCurrencySink.value.name)
+                            .format(transactions[index].amount * currencyMultiplier),
+                      ),
                     ),
                     title: Row(
                       children: [
                         Text(
                           transactions[index].title,
-                          style: Theme.of(context).textTheme.bodyText2,
+                          style: Theme.of(context).textTheme.bodyMedium,
                         ),
                         IconButton(
                           key: Key('map'),
                           icon: Icon(Icons.map_outlined),
-                          color: Theme.of(context).errorColor,
+                          color: Theme.of(context).colorScheme.error,
                           onPressed: transactions[index].localization == null
                               ? null
                               : () => Navigator.of(context).push<LocalizationObject>(
@@ -79,7 +70,7 @@ class TransactionList extends StatelessWidget {
                     trailing: IconButton(
                       key: Key('del'),
                       icon: Icon(Icons.delete),
-                      color: Theme.of(context).errorColor,
+                      color: Theme.of(context).colorScheme.error,
                       onPressed: () => deleteTx(transactions[index].id),
                     ),
                   ),

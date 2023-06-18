@@ -28,7 +28,7 @@ class Chart extends StatelessWidget {
         'day': DateFormat.E().format(weekDay).substring(0, 1),
         'amount': totalSum * currencyMultiplier,
       };
-    }).reversed.toList();
+    }).toList();
   }
 
   double get totalSpending => groupedTransactionValues.fold(0.0, (sum, item) => sum + (item['amount'] as double));
@@ -40,7 +40,7 @@ class Chart extends StatelessWidget {
       margin: EdgeInsets.all(20),
       child: Padding(
         padding: EdgeInsets.all(10),
-        child: Row(
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: groupedTransactionValues.map((data) {
             return ChartBar(

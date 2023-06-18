@@ -4,7 +4,8 @@ import 'package:personal_expanses_app/currency_api_bloc.dart';
 import 'package:personal_expanses_app/currency_enum.dart';
 import 'package:personal_expanses_app/map_view.dart';
 import 'package:personal_expanses_app/themes.dart';
-import 'package:permission_handler/permission_handler.dart';
+
+// import 'package:permission_handler/permission_handler.dart';
 import 'package:uuid/uuid.dart';
 import 'package:async_builder/init_builder.dart';
 
@@ -18,10 +19,6 @@ import 'loading_view.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final result = await requestPermissions([Permission.location]);
-  if (!result) {
-    retryRequests();
-  }
 
   return runApp(MyApp());
 }
@@ -36,30 +33,6 @@ class MyApp extends StatelessWidget {
       home: MyHomePage(),
     );
   }
-}
-
-final Map<Permission, PermissionStatus> _deniedPermissions = {};
-
-void retryRequests() {
-  _deniedPermissions.forEach((perm, status) async {
-    if (status.isPermanentlyDenied) {
-      await openAppSettings();
-    } else {
-      final result = await perm.request();
-      _deniedPermissions[perm] = result;
-    }
-  });
-}
-
-Future<bool> requestPermissions(Iterable<Object> permissions) async {
-  _deniedPermissions.clear();
-  final results = await (permissions.whereType<Permission>().toList()).request();
-  final denied = results.entries.where((perm) => perm.value.isDenied || perm.value.isPermanentlyDenied);
-  if (_deniedPermissions.isNotEmpty) {
-    _deniedPermissions.addEntries(denied);
-    return false;
-  }
-  return true;
 }
 
 class MyHomePage extends StatefulWidget {
@@ -107,7 +80,7 @@ class MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  void startAddNewTransaction(BuildContext ctx) {
+  void _startAddNewTransaction(BuildContext ctx) {
     showModalBottomSheet(
       context: ctx,
       isScrollControlled: true,
@@ -132,7 +105,6 @@ class MyHomePageState extends State<MyHomePage> {
     });
   }
 
-//fkIoHVXWlo4VhfR0fnNmVNpv30COQ0Yl
   @override
   Widget build(BuildContext context) {
     return InitBuilder<void>(
@@ -154,6 +126,7 @@ class MyHomePageState extends State<MyHomePage> {
                     child: SizedBox(
                       width: 80,
                       child: DropdownButtonFormField<currencyEnum>(
+                        focusColor: Colors.red,
                         iconEnabledColor: Colors.white,
                         isExpanded: true,
                         isDense: false,
@@ -178,7 +151,7 @@ class MyHomePageState extends State<MyHomePage> {
                     padding: const EdgeInsets.symmetric(horizontal: 8.0),
                     child: IconButton(
                       icon: Icon(Icons.add),
-                      onPressed: () => startAddNewTransaction(context),
+                      onPressed: () => _startAddNewTransaction(context),
                     ),
                   ),
                 ],
@@ -208,9 +181,12 @@ class MyHomePageState extends State<MyHomePage> {
               ),
               floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
               floatingActionButton: FloatingActionButton(
-                child: Icon(Icons.add),
+                child: Icon(
+                  Icons.add,
+                  color: Colors.white,
+                ),
                 key: Key('addButton'),
-                onPressed: () => startAddNewTransaction(context),
+                onPressed: () => _startAddNewTransaction(context),
               ),
             ),
             AsyncBuilder(
