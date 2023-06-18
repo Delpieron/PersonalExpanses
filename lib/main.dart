@@ -56,7 +56,7 @@ class MyHomePageState extends State<MyHomePage> {
     ),
   ];
 
-  List<Transaction> get _recentTransactions {
+  List<Transaction> get recentTransactions {
     return _userTransactions.where((tx) {
       return tx.date.isAfter(
         DateTime.now().subtract(
@@ -66,7 +66,7 @@ class MyHomePageState extends State<MyHomePage> {
     }).toList();
   }
 
-  void _addNewTransaction(String txTitle, double txAmount, DateTime chosenDate, LocalizationObject? localization) {
+  void addNewTransaction(String txTitle, double txAmount, DateTime chosenDate, LocalizationObject? localization) {
     final newTx = Transaction(
       title: txTitle,
       amount: txAmount,
@@ -91,7 +91,7 @@ class MyHomePageState extends State<MyHomePage> {
             duration: Duration(milliseconds: 150),
             curve: Curves.easeIn,
             padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-            child: NewTransaction(_addNewTransaction),
+            child: NewTransaction(addNewTransaction),
           ),
           behavior: HitTestBehavior.opaque,
         );
@@ -99,7 +99,7 @@ class MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  void _deleteTransaction(String id) {
+  void deleteTransaction(String id) {
     setState(() {
       _userTransactions.removeWhere((tx) => tx.id == id);
     });
@@ -172,8 +172,8 @@ class MyHomePageState extends State<MyHomePage> {
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: <Widget>[
-                        Chart(_recentTransactions, currencyMultiplier),
-                        TransactionList(_userTransactions, _deleteTransaction, currencyMultiplier),
+                        Chart(recentTransactions, currencyMultiplier),
+                        TransactionList(_userTransactions, deleteTransaction, currencyMultiplier),
                       ],
                     );
                   },

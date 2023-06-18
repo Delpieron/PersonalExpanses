@@ -18,9 +18,9 @@ class _NewTransactionState extends State<NewTransaction> {
   final _amountController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
   LocalizationObject? transactionAdress;
-  List<_DateObject> daysOfWeek = List.generate(
+  List<DateObject> daysOfWeek = List.generate(
     Days.values.length,
-    (index) => _DateObject(
+    (index) => DateObject(
       Days.values[index],
       DateTime.now().subtract(
         Duration(days: index),
@@ -48,7 +48,7 @@ class _NewTransactionState extends State<NewTransaction> {
     Navigator.of(context).pop();
   }
 
-  _DateObject groupValue = _DateObject(Days.values[DateTime.now().weekday - 1], DateTime.now());
+  DateObject groupValue = DateObject(Days.values[DateTime.now().weekday - 1], DateTime.now());
 
   @override
   Widget build(BuildContext context) {
@@ -115,10 +115,10 @@ class _NewTransactionState extends State<NewTransaction> {
                 (index) {
                   return Column(
                     children: [
-                      Radio<_DateObject>(
+                      Radio<DateObject>(
                         value: daysOfWeek[index],
                         groupValue: groupValue,
-                        onChanged: (_DateObject? value) {
+                        onChanged: (DateObject? value) {
                           setState(() => groupValue = value!);
                           _selectedDate = DateTime.now().subtract(Duration(days: index));
                         },
@@ -149,8 +149,8 @@ class _NewTransactionState extends State<NewTransaction> {
   }
 }
 
-class _DateObject {
-  _DateObject(this.name, this.dayDate);
+class DateObject {
+  DateObject(this.name, this.dayDate);
 
   final Days name;
   final DateTime dayDate;
